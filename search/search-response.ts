@@ -15,10 +15,16 @@ type NodeObj = {
   label?: NodeLabel[];
   direction: "outgoing" | "incoming";
 };
+
+type PredicateObj = {
+  label?: NodeLabel[];
+  objects: NodeObj[];
+};
+
 type NodeModel = {
   id: string;
   datasetRegisterIds: string[];
-  data: { [predicate: string]: NodeObj[] };
+  data: { [predicate: string]: PredicateObj };
 };
 
 type SearchQueryResponseModel = NodeModel[];
@@ -31,33 +37,46 @@ const response: SearchQueryResponseModel = [
       "https://data.spinque.com/ld/data/vangoghworldwide/albertina/",
     ],
     data: {
-      "http://purl.org/dc/terms/title": [
-        {
-          value: "...",
-          label: [
-            {
-              value: "...",
-              language: "nl",
-              highlights: [{ start: 0, end: 3 }],
-            },
-            {
-              value: "...",
-              language: "en",
-            },
-          ],
-          direction: "outgoing",
-        },
-        {
-          value: "...",
-          label: [
-            {
-              value: "...",
-              language: "nl",
-            },
-          ],
-          direction: "outgoing",
-        },
-      ],
+      "http://purl.org/dc/terms/title": {
+        label: [
+          {
+            value: "...",
+            language: "nl",
+            highlights: [{ start: 0, end: 3 }],
+          },
+          {
+            value: "...",
+            language: "en",
+          },
+        ],
+        objects: [
+          {
+            value: "...",
+            label: [
+              {
+                value: "...",
+                language: "nl",
+                highlights: [{ start: 0, end: 3 }],
+              },
+              {
+                value: "...",
+                language: "en",
+              },
+            ],
+            direction: "outgoing",
+          },
+          {
+            value: "...",
+            label: [
+              {
+                value: "...",
+                language: "nl",
+              },
+            ],
+            direction: "outgoing",
+          },
+        ],
+      },
     },
     // ...
   },
