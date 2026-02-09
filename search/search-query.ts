@@ -18,7 +18,7 @@ export type SearchQueryModel = {
 };
 
 const query: SearchQueryModel = {
-  query: "lepel*",
+  query: "night*",
   datasetRegisterIds: [
     // Defined in Valeros config, optionally toggled/disabled by user through UI checkboxes
     "https://n2t.net/ark:/60537/bD64Hu", // GTM
