@@ -5,6 +5,7 @@ type SearchQueryModel = {
   datasetRegisterIds: string[];
   filters: FilterModel[];
   sorting: any;
+  preferredLanguages?: string[];
 };
 
 type FilterModel = {
@@ -81,4 +82,6 @@ const query: SearchQueryModel = {
     ],
     direction: "asc",
   },
+  // If left out, return all available language values
+  preferredLanguages: ["nl", "nl-nl"],
 };
