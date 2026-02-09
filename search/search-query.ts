@@ -1,16 +1,20 @@
 /** @format */
 
-type SearchQueryModel = {
+import type { Selector } from "./search-query-types";
+
+export type FilterModel = {
+  predicates?: string[];
+  objects?: string[];
+};
+
+export type SearchQueryModel = {
   query: string;
   datasetRegisterIds: string[];
   filters: FilterModel[];
   sorting: any;
-  preferredLanguages?: string[];
-};
-
-type FilterModel = {
-  predicates?: string[];
-  objects?: string[];
+  retrieve?: {
+    selectors: Selector[];
+  };
 };
 
 const query: SearchQueryModel = {
@@ -82,6 +86,162 @@ const query: SearchQueryModel = {
     ],
     direction: "asc",
   },
-  // If left out, return all available language values
-  preferredLanguages: ["nl", "nl-nl"],
+  retrieve: {
+    selectors: [
+      {
+        // Fetch some predicate values for the root hits
+        // Flow: Node --identifier/type/...--> string
+        scope: "roots",
+        select: [
+          {
+            kind: "field",
+            predicates: [
+              "http://purl.org/dc/terms/identifier",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+              "*",
+            ],
+          },
+        ],
+      },
+      {
+        // For every node returned (roots + expanded nodes), fetch labels
+        // Flow: Node --label/title--> string
+        scope: "all",
+        select: [
+          {
+            kind: "field",
+            predicates: [
+              "http://www.w3.org/2000/01/rdf-schema#label",
+              "http://purl.org/dc/terms/title",
+            ],
+            languages: ["nl", "en"],
+          },
+        ],
+      },
+      {
+        // For every node returned (roots + expanded nodes), fetch labels using an extra hop through an intermediate node (e.g. for SKOS-XL, where label literals are stored in a separate node)
+        // Flow: Node --prefLabel--> Label node --literalForm--> string
+        scope: "all",
+        select: [
+          {
+            kind: "expand",
+            direction: "outgoing",
+            steps: [
+              {
+                predicates: ["http://www.w3.org/2008/05/skos-xl#prefLabel"],
+              },
+            ],
+            select: [
+              {
+                kind: "field",
+                predicates: ["http://www.w3.org/2008/05/skos-xl#literalForm"],
+                languages: ["nl", "en"],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        // For the root hits, make an extra hop to fetch creator/author information
+        // Flow: Root node --creator/author--> Person node --givenName/familyName/...--> string
+        scope: "roots",
+        select: [
+          {
+            kind: "expand",
+            direction: "outgoing",
+            steps: [
+              {
+                predicates: [
+                  "http://purl.org/dc/terms/creator",
+                  "https://schema.org/author",
+                ],
+              },
+            ],
+            select: [
+              {
+                kind: "field",
+                predicates: [
+                  "https://schema.org/givenName",
+                  "https://schema.org/familyName",
+                  "https://schema.org/birthDate",
+                  "https://schema.org/deathDate",
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        // For the root hits, make two hops to fetch production location information
+        // Flow: Root node --was_produced_by--> ProductionEvent node --took_place_at--> Place node --lat/long/address--> string
+        scope: "roots",
+        select: [
+          {
+            kind: "expand",
+            direction: "outgoing",
+            steps: [
+              {
+                predicates: [
+                  "http://www.cidoc-crm.org/cidoc-crm/P108i_was_produced_by",
+                ],
+              },
+              {
+                predicates: [
+                  "http://www.cidoc-crm.org/cidoc-crm/P7_took_place_at",
+                ],
+              },
+            ],
+            select: [
+              {
+                kind: "field",
+                predicates: [
+                  "http://www.w3.org/2003/01/geo/wgs84_pos#lat",
+                  "http://www.w3.org/2003/01/geo/wgs84_pos#long",
+                  "https://schema.org/address",
+                ],
+                languages: ["nl", "en"],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        // For the root hits, make two incoming hops to fetch information about the creator/author of the root node
+        // Flow: Root node <--about/mentions-- Document node <--author/creator-- Person node --givenName/familyName/...--> string
+        scope: "roots",
+        select: [
+          {
+            kind: "expand",
+            direction: "incoming",
+            steps: [
+              {
+                predicates: [
+                  "https://schema.org/about",
+                  "https://schema.org/mentions",
+                ],
+              },
+              {
+                predicates: [
+                  "https://schema.org/author",
+                  "http://purl.org/dc/terms/creator",
+                ],
+              },
+            ],
+            includeIntermediate: true,
+            select: [
+              {
+                kind: "field",
+                predicates: [
+                  "https://schema.org/givenName",
+                  "https://schema.org/familyName",
+                  "https://schema.org/birthDate",
+                  "https://schema.org/deathDate",
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 };
