@@ -1,8 +1,14 @@
 /** @format */
 
+type HighlightRange = {
+  start: number;
+  end: number;
+};
+
 type NodeLabel = {
   value: string;
   language: string;
+  highlights?: HighlightRange[];
 };
 type NodeObj = {
   value: string;
@@ -32,6 +38,7 @@ const response: SearchQueryResponseModel = [
             {
               value: "...",
               language: "nl",
+              highlights: [{ start: 0, end: 3 }],
             },
             {
               value: "...",
